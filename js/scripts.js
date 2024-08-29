@@ -1,63 +1,29 @@
-// Google Analytics
-window.dataLayer = window.dataLayer || [];
-function gtag() {
-  dataLayer.push(arguments);
-}
-gtag("js", new Date());
-gtag("config", "UA-XXXXXXX-X"); // Replace with your actual Google Analytics ID
+// VPNAPI.io token
+const vpnApiToken = "3c641b5c07f4444dbaeba4a107d99ada"; // Replace with your actual VPNAPI.io token
 
-// Meta Pixel Code
-!(function (f, b, e, v, n, t, s) {
-  if (f.fbq) return;
-  n = f.fbq = function () {
-    n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-  };
-  if (!f._fbq) f._fbq = n;
-  n.push = n;
-  n.loaded = !0;
-  n.version = "2.0";
-  n.queue = [];
-  t = b.createElement(e);
-  t.async = !0;
-  t.src = v;
-  s = b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t, s);
-})(
-  window,
-  document,
-  "script",
-  "https://connect.facebook.net/en_US/fbevents.js"
-);
-fbq("init", "XXXXXXXXXXXXX"); // Replace with your actual Meta Pixel ID
-fbq("track", "PageView");
-
-// Google Analytics Global Site Tag (gtag.js)
-(function () {
-  var gtagScript = document.createElement("script");
-  gtagScript.src = "https://www.googletagmanager.com/gtag/js?id=AW-16684410138";
-  gtagScript.async = true;
-  document.head.appendChild(gtagScript);
-
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    dataLayer.push(arguments);
-  }
-  gtag("js", new Date());
-  gtag("config", "AW-16684410138");
-})();
-
-// Region locking
-const token = "f74b55eef2d637"; // Leave as '' if not using a token
-
-// Function to check user's location
-function checkLocation() {
-  fetch(`https://ipinfo.io/json?token=${token}`)
-    .then((response) => response.json())
+// Function to check user's VPN status and location
+function checkVPNAndLocation() {
+  fetch(`https://vpnapi.io/api/?key=${vpnApiToken}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+      return response.json();
+    })
     .then((data) => {
-      const userCountry = data.country;
+      const userCountry = data.location.country_code;
+      const vpnDetected =
+        data.security.vpn || data.security.proxy || data.security.tor;
 
       // Define allowed countries
-      const allowedCountries = ["US", "CA"]; //  US and Canada only
+      const allowedCountries = ["US", "CA"]; // US and Canada only
+
+      // Check for VPN, proxy, or Tor usage
+      if (vpnDetected) {
+        document.body.innerHTML =
+          "<h1>Access Denied</h1><p>VPN or proxy usage detected. Please disable it to access this content.</p>";
+        return;
+      }
 
       // Check if the user's country is in the allowed list
       if (!allowedCountries.includes(userCountry)) {
@@ -70,11 +36,10 @@ function checkLocation() {
       }
     })
     .catch((error) => {
-      console.error("Error fetching location data:", error);
-      document.body.innerHTML =
-        "<h1>Error</h1><p>Unable to determine your location. Please try again later.</p>";
+      console.error("Error fetching location or VPN data:", error);
+      document.body.innerHTML = `<h1>Error</h1><p>Unable to determine your location or VPN status. Error: ${error.message}</p>`;
     });
 }
 
 // Call the function on page load
-window.onload = checkLocation;
+window.onload = checkVPNAndLocation;
