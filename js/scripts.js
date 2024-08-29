@@ -47,8 +47,8 @@ fbq("track", "PageView");
 })();
 
 // Region locking
-// Your ipinfo.io token
-const token = "f74b55eef2d637";
+// Your ipinfo.io token (optional)
+const token = "f74b55eef2d637"; // Leave as '' if not using a token
 
 // Function to check user's location
 function checkLocation() {
@@ -58,17 +58,14 @@ function checkLocation() {
       const userCountry = data.country;
 
       // Define allowed countries
-      const allowedCountries = ["US", "CA"]; // Example: US and Canada only
+      const allowedCountries = ["US", "CA"]; //  US and Canada only
 
+      // Check if the user's country is in the allowed list
       if (!allowedCountries.includes(userCountry)) {
-        // If the user's country is not in the allowed list, redirect or show a message
         document.body.innerHTML =
           "<h1>Access Denied</h1><p>This content is not available in your region.</p>";
-      } else {
-        // If the user is in an allowed country, display the content
-        document.body.innerHTML =
-          "<h1>Welcome!</h1><p>This content is available in your region.</p>";
       }
+      // If the country is allowed, the default content is displayed without changes
     })
     .catch((error) => {
       console.error("Error fetching location data:", error);
