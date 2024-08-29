@@ -47,7 +47,6 @@ fbq("track", "PageView");
 })();
 
 // Region locking
-// Your ipinfo.io token (optional)
 const token = "f74b55eef2d637"; // Leave as '' if not using a token
 
 // Function to check user's location
@@ -64,8 +63,11 @@ function checkLocation() {
       if (!allowedCountries.includes(userCountry)) {
         document.body.innerHTML =
           "<h1>Access Denied</h1><p>This content is not available in your region.</p>";
+      } else {
+        // If the country is allowed, show the content and remove the loading indicator
+        document.getElementById("loading").style.display = "none";
+        document.querySelector(".container").style.display = "block";
       }
-      // If the country is allowed, the default content is displayed without changes
     })
     .catch((error) => {
       console.error("Error fetching location data:", error);
