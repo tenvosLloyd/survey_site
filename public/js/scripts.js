@@ -1,22 +1,14 @@
-// VPNAPI.io token
-const vpnApiToken = "3c641b5c07f4444dbaeba4a107d99ada"; // Replace with your actual VPNAPI.io token
-
-// Function to check user's VPN status and location
-function checkVPNAndLocation() {
-  // Get the user's IP details
-  fetch(`https://vpnapi.io/api/?key=${vpnApiToken}`)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      return response.json();
-    })
+// Function to check VPN and location via Netlify proxy
+function checkVPNAndLocation(userIP) {
+  // Make a request to the Netlify function instead of the VPN API
+  fetch(
+    `https://vpncheck.netlify.app/.netlify/functions/check-vpn?ip=${userIP}`
+  )
+    .then((response) => response.json())
     .then((data) => {
-      // Extract necessary data
-      const userCountry = data.location.country_code;
       const vpnDetected =
         data.security.vpn || data.security.proxy || data.security.tor;
-      const isHostingProvider = data.security.hosting; // Hosting provider often used by VPNs
+      const userCountry = data.location.country_code;
 
       // Define allowed countries (e.g., US and Canada)
       const allowedCountries = ["US", "CA"];
@@ -79,35 +71,36 @@ function checkVPNAndLocation() {
         "ZW",
       ];
 
-      // Check for VPN, proxy, Tor, or hosting provider (aggressive filtering)
-      if (vpnDetected || isHostingProvider) {
+      if (vpnDetected) {
         document.body.innerHTML =
           "<h1>Access Denied</h1><p>VPN, proxy, or hosting provider usage detected. Please disable it to access this content.</p>";
         return;
       }
 
-      // Check if the user's country is blocked
       if (blockedCountries.includes(userCountry)) {
         document.body.innerHTML =
           "<h1>Access Denied</h1><p>This content is not available in your region.</p>";
         return;
       }
 
-      // Check if the user's country is in the allowed list
       if (!allowedCountries.includes(userCountry)) {
         document.body.innerHTML =
           "<h1>Access Denied</h1><p>This content is not available in your region.</p>";
       } else {
-        // If the country is allowed, show the content and remove the loading indicator
         document.getElementById("loading").style.display = "none";
         document.querySelector(".container").style.display = "block";
       }
     })
     .catch((error) => {
-      console.error("Error fetching location or VPN data:", error);
+      console.error("Error fetching VPN data:", error);
       document.body.innerHTML = `<h1>Error</h1><p>Unable to determine your location or VPN status. Error: ${error.message}</p>`;
     });
 }
 
 // Call the function on page load
-window.onload = checkVPNAndLocation;
+window.onload = () => {
+  // Fetch the user's IP address and then call checkVPNAndLocation
+  fetch("https://api.ipify.org?format=json")
+    .then((response) => response.json())
+    .then((data) => checkVPNAndLocation(data.ip));
+};
